@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Demo - Supabase (sem carga)",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/demo",
+            "mainClass": "com.example.demo.DemoApplication",
+            "projectName": "demo",
+            "args": "",
+            "envFile": "${workspaceFolder}/demo/.env"
+        },
+        {
+            "type": "java",
+            "name": "Demo - Testar banco (insere 5 registros)",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/demo",
+            "mainClass": "com.example.demo.DemoApplication",
+            "projectName": "demo",
+            "args": "--spring.profiles.active=teste-banco",
+            "envFile": "${workspaceFolder}/demo/.env"
+        }
+    ]
+}
