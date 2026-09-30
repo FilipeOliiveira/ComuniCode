@@ -1,11 +1,11 @@
 package com.example.demo.repository;
 
-import com.example.demo.model.Postagem;
+import com.example.demo.model.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
 @Repository
-public interface PostagemRepository extends JpaRepository<Postagem, UUID> {
+public interface TagRepository extends JpaRepository<Tag, UUID> {
 }
