@@ -12,6 +12,27 @@ import java.util.UUID;
 
 @Service
 public class DisciplinaService {
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public java.util.List<Disciplina> listarTodas() {
+        return disciplinaRepository.findAllByOrderByNomeAsc();
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Disciplina buscarPorId(UUID idDisciplina) {
+        if (idDisciplina == null) {
+            throw new IllegalArgumentException("O ID da disciplina e obrigatorio.");
+        }
+        return disciplinaRepository.findById(idDisciplina)
+                .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public java.util.List<Disciplina> buscarPorNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome para busca e obrigatorio.");
+        }
+        return disciplinaRepository.findByNomeContainingIgnoreCaseOrderByNomeAsc(nome.trim());
+    }
 
     @Autowired
     private DisciplinaRepository disciplinaRepository;

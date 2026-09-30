@@ -13,6 +13,59 @@ import java.util.UUID;
 
 @Service
 public class PostagemService {
+    @Transactional(readOnly = true)
+    public Postagem buscarPorId(UUID idPostagem) {
+        validarId(idPostagem);
+        return postagemRepository.findById(idPostagem)
+                .orElseThrow(() -> new IllegalArgumentException("Postagem nao encontrada."));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Postagem> listarPorConteudo(UUID idConteudo) {
+        validarId(idConteudo);
+        return postagemRepository.findByConteudoIdOrderByDataCriacaoDesc(idConteudo);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Postagem> listarPorAutor(UUID idAutor) {
+        validarId(idAutor);
+        return postagemRepository.findByCriadorIdOrderByDataCriacaoDesc(idAutor);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Postagem> listarPorTag(UUID idTag) {
+        validarId(idTag);
+        return postagemRepository.findDistinctByTagsIdOrderByDataCriacaoDesc(idTag);
+    }
+
+    /** Edicao de texto pelo autor ou administrador; outros campos sao preservados. */
+    @Transactional
+    public Postagem editarPostagem(UUID idPostagem, UUID idUsuarioLogado, String titulo, String descricao) {
+        validarId(idUsuarioLogado);
+        validarTitulo(titulo);
+        Postagem postagem = buscarPorId(idPostagem);
+        Usuario usuario = usuarioRepository.findById(idUsuarioLogado)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado."));
+        if (!postagem.getCriador().getId().equals(usuario.getId()) && !(usuario instanceof Administrador)) {
+            throw new IllegalArgumentException("Acesso negado: sem permissao para editar esta postagem.");
+        }
+        postagem.setTitulo(titulo.trim());
+        postagem.setDescricao(descricao);
+        postagem.setDataAtualizacao(LocalDateTime.now());
+        return postagemRepository.save(postagem);
+    }
+
+    private void validarId(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("O ID e obrigatorio.");
+        }
+    }
+
+    private void validarTitulo(String titulo) {
+        if (titulo == null || titulo.isBlank() || titulo.trim().length() > 255) {
+            throw new IllegalArgumentException("O titulo deve conter entre 1 e 255 caracteres.");
+        }
+    }
 
     @Autowired
     private PostagemRepository postagemRepository;
@@ -33,6 +86,9 @@ public class PostagemService {
 
     @Transactional
     public Postagem criarPostagem(Postagem postagem) {
+        if (postagem == null) {
+            throw new IllegalArgumentException("A postagem e obrigatoria.");
+        }
         if (postagem.getCriador() == null || postagem.getCriador().getId() == null) {
             throw new IllegalArgumentException("O criador da postagem e obrigatorio.");
         }
@@ -50,6 +106,12 @@ public class PostagemService {
     // =======================================================
     @Transactional
     public Postagem criarPostagem(Postagem postagem, UUID idCriador, UUID idConteudo, List<UUID> idsTags) {
+        if (postagem == null || postagem.getId() != null) {
+            throw new IllegalArgumentException("Informe uma nova postagem sem ID.");
+        }
+        validarTitulo(postagem.getTitulo());
+        validarId(idCriador);
+        validarId(idConteudo);
         
         // 1. Validações básicas de preenchimento
         if (postagem.getTitulo() == null || postagem.getTitulo().trim().isEmpty()) {
@@ -82,7 +144,9 @@ public class PostagemService {
         postagem.setPontuacao(BigDecimal.ZERO);
         postagem.setScoreRelevancia(BigDecimal.ZERO);
         postagem.setVerificada(false);
-        //postagem.setStatus(StatusPostagem.ATIVA); // Supondo que exista o enum ATIVA
+        if (postagem.getStatus() == null) {
+            postagem.setStatus(StatusPostagem.RASCUNHO);
+        }
 
         // 4. Configurar relacionamento bidirecional dos Anexos (Necessário para o CascadeType.ALL)
         if (postagem.getAnexos() != null && !postagem.getAnexos().isEmpty()) {

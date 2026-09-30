@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface ConteudoRepository extends JpaRepository<Conteudo, UUID> {
+    java.util.List<Conteudo> findByDisciplinaIdOrderByOrdemAscTituloAsc(UUID idDisciplina);
 }

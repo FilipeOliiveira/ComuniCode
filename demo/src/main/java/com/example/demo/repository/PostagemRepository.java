@@ -8,4 +8,7 @@ import java.util.UUID;
 
 @Repository
 public interface PostagemRepository extends JpaRepository<Postagem, UUID> {
+    java.util.List<Postagem> findByConteudoIdOrderByDataCriacaoDesc(UUID idConteudo);
+    java.util.List<Postagem> findByCriadorIdOrderByDataCriacaoDesc(UUID idAutor);
+    java.util.List<Postagem> findDistinctByTagsIdOrderByDataCriacaoDesc(UUID idTag);
 }

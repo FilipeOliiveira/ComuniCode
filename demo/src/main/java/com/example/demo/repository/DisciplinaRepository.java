@@ -8,6 +8,8 @@ import java.util.UUID;
 
 @Repository
 public interface DisciplinaRepository extends JpaRepository<Disciplina, UUID> {
+    java.util.List<Disciplina> findAllByOrderByNomeAsc();
+    java.util.List<Disciplina> findByNomeContainingIgnoreCaseOrderByNomeAsc(String nome);
     
     // Verifica se já existe uma disciplina com esse código (ignorando maiúsculas/minúsculas)
     boolean existsByCodigoIgnoreCase(String codigo);
