@@ -26,6 +26,25 @@ public class PostagemService {
     @Autowired
     private TagRepository tagRepository;
 
+    @Transactional(readOnly = true)
+    public List<Postagem> listarTodas() {
+        return postagemRepository.findAll();
+    }
+
+    @Transactional
+    public Postagem criarPostagem(Postagem postagem) {
+        if (postagem.getCriador() == null || postagem.getCriador().getId() == null) {
+            throw new IllegalArgumentException("O criador da postagem e obrigatorio.");
+        }
+        if (postagem.getConteudo() == null || postagem.getConteudo().getId() == null) {
+            throw new IllegalArgumentException("O conteudo da postagem e obrigatorio.");
+        }
+        List<UUID> idsTags = postagem.getTags() == null ? List.of()
+                : postagem.getTags().stream().map(Tag::getId).toList();
+        return criarPostagem(postagem, postagem.getCriador().getId(),
+                postagem.getConteudo().getId(), idsTags);
+    }
+
     // =======================================================
     // 1. CRIAR POSTAGEM
     // =======================================================
