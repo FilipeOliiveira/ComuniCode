@@ -105,6 +105,7 @@ class UsuarioServiceTest {
     @Test
     void deveRetornarUsuarioQuandoCredenciaisConferem() {
         Aluno aluno = new Aluno();
+        aluno.setAtivo(true);
         aluno.setEmail("aluno@example.com");
         // Valida a senha digitada contra um hash BCrypt.
         aluno.setSenhaHash(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("senha-de-teste"));
@@ -112,6 +113,16 @@ class UsuarioServiceTest {
 
         assertSame(aluno, service.realizarLogin(aluno.getEmail(), "senha-de-teste"));
         verify(usuarioRepository).findByEmailIgnoreCase(aluno.getEmail());
+    }
+
+    @Test
+    void deveRejeitarUsuarioInativoMesmoComSenhaCorreta() {
+        Aluno aluno = new Aluno();
+        aluno.setAtivo(false);
+        aluno.setSenhaHash(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("senha-de-teste"));
+        when(usuarioRepository.findByEmailIgnoreCase("inativo@example.com")).thenReturn(Optional.of(aluno));
+        assertThrows(org.springframework.security.authentication.BadCredentialsException.class,
+                () -> service.realizarLogin("inativo@example.com", "senha-de-teste"));
     }
 
     @Test

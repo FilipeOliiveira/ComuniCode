@@ -1,5 +1,7 @@
 package com.example.demo.services;
 
+import com.example.demo.exception.*;
+
 import com.example.demo.model.Conteudo;
 import com.example.demo.model.Disciplina;
 import com.example.demo.repository.ConteudoRepository;
@@ -53,7 +55,7 @@ public class ConteudoService {
             throw new IllegalArgumentException("O ID do conteudo e obrigatorio.");
         }
         return conteudoRepository.findById(idConteudo)
-                .orElseThrow(() -> new IllegalArgumentException("Conteudo nao encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conteudo nao encontrado."));
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +69,6 @@ public class ConteudoService {
             throw new IllegalArgumentException("O ID da disciplina e obrigatorio.");
         }
         return disciplinaRepository.findById(idDisciplina)
-                .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Disciplina nao encontrada."));
     }
 }

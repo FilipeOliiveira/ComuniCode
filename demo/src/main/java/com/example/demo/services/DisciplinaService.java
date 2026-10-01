@@ -1,5 +1,7 @@
 package com.example.demo.services;
 
+import com.example.demo.exception.*;
+
 import com.example.demo.model.Administrador;
 import com.example.demo.model.Disciplina;
 import com.example.demo.model.Usuario;
@@ -23,7 +25,7 @@ public class DisciplinaService {
             throw new IllegalArgumentException("O ID da disciplina e obrigatorio.");
         }
         return disciplinaRepository.findById(idDisciplina)
-                .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Disciplina nao encontrada."));
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -47,14 +49,18 @@ public class DisciplinaService {
      * @param idAdmin O ID do usuário que está tentando criar a disciplina
      * @return A disciplina salva no banco de dados
      */
+    @org.springframework.transaction.annotation.Transactional
     public Disciplina criarDisciplina(Disciplina novaDisciplina, UUID idAdmin) {
+        if (novaDisciplina == null || novaDisciplina.getId() != null || idAdmin == null) {
+            throw new IllegalArgumentException("Informe uma nova disciplina e o administrador.");
+        }
         
         // 1. Validar se o usuário existe e se é um Administrador
         Usuario usuario = usuarioRepository.findById(idAdmin)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
 
         if (!(usuario instanceof Administrador)) {
-            throw new RuntimeException("Acesso negado: Apenas administradores podem criar disciplinas.");
+            throw new PermissaoNegadaException("Acesso negado: Apenas administradores podem criar disciplinas.");
         }
 
         // 2. Validar se as informações básicas foram preenchidas
@@ -73,13 +79,18 @@ public class DisciplinaService {
 
         // 3. Validar se a disciplina já existe (Regra de unicidade)
         if (disciplinaRepository.existsByCodigoIgnoreCase(novaDisciplina.getCodigo().trim())) {
-            throw new IllegalArgumentException("Já existe uma disciplina cadastrada com o código informado.");
+            throw new ConflitoException("Já existe uma disciplina cadastrada com o código informado.");
         }
         if (disciplinaRepository.existsByNomeIgnoreCase(novaDisciplina.getNome().trim())) {
-            throw new IllegalArgumentException("Já existe uma disciplina cadastrada com o nome informado.");
+            throw new ConflitoException("Já existe uma disciplina cadastrada com o nome informado.");
         }
 
         // 4. Salvar no banco de dados (o ID será gerado automaticamente pelo UUID)
+        if (novaDisciplina.getNome().trim().length() > 255 || novaDisciplina.getCodigo().trim().length() > 255) {
+            throw new IllegalArgumentException("Nome e codigo devem ter no maximo 255 caracteres.");
+        }
+        novaDisciplina.setNome(novaDisciplina.getNome().trim());
+        novaDisciplina.setCodigo(novaDisciplina.getCodigo().trim());
         return disciplinaRepository.save(novaDisciplina);
     }
 }

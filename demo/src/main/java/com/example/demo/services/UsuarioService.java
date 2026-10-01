@@ -1,5 +1,7 @@
 package com.example.demo.services;
 
+import com.example.demo.exception.*;
+
 import com.example.demo.model.Aluno;
 import com.example.demo.model.Professor;
 import com.example.demo.model.Usuario;
@@ -65,7 +67,7 @@ public class UsuarioService {
 
     private void prepararCadastro(Usuario usuario, String senha) {
         if (usuarioRepository.findByEmailIgnoreCase(usuario.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Ja existe um usuario cadastrado com este e-mail.");
+            throw new ConflitoException("Ja existe um usuario cadastrado com este e-mail.");
         }
         usuario.setSenhaHash(passwordEncoder.encode(senha));
         usuario.setDataCadastro(LocalDateTime.now());
@@ -75,6 +77,9 @@ public class UsuarioService {
     private String textoObrigatorio(String texto, String campo) {
         if (texto == null || texto.isBlank()) {
             throw new IllegalArgumentException(campo + " e obrigatorio.");
+        }
+        if (texto.trim().length() > 255) {
+            throw new IllegalArgumentException(campo + " deve ter no maximo 255 caracteres.");
         }
         return texto.trim();
     }
@@ -86,9 +91,12 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public Usuario realizarLogin(String email, String senha) {
         Usuario usuario = usuarioRepository.findByEmailIgnoreCase(normalizarEmail(email))
-                .orElseThrow(() -> new RuntimeException("Falha no login: Usuário não encontrado com este e-mail."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Falha no login: Usuário não encontrado com este e-mail."));
         if (senha == null || !passwordEncoder.matches(senha, usuario.getSenhaHash())) {
             throw new RuntimeException("Falha no login: Senha incorreta.");
+        }
+        if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+            throw new org.springframework.security.authentication.BadCredentialsException("Credenciais invalidas.");
         }
         return usuario;
     }

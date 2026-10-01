@@ -1,5 +1,9 @@
 # Testes de integracao dos services no Supabase
 
+Configure `DB_URL`, `DB_USERNAME` e `DB_PASSWORD` no ambiente antes de executar.
+A configuracao nao contem mais credenciais fixas. Use `sslmode=require` na URL,
+sem senha embutida. Para os testes locais da API, veja [README_API.md](README_API.md).
+
 ## Cadastro permanente de Joao e Geraldo
 
 Para gravar o aluno Joao e o professor Geraldo e consultar depois no painel:

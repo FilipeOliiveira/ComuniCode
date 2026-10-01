@@ -1,5 +1,7 @@
 package com.example.demo.services;
 
+import com.example.demo.exception.*;
+
 import com.example.demo.model.Tag;
 import com.example.demo.repository.TagRepository;
 import org.springframework.stereotype.Service;
@@ -19,7 +21,7 @@ public class TagService {
     public Tag criarTag(String nome) {
         String nomeValidado = validarNome(nome);
         if (tagRepository.findByNomeNormalizado(nomeValidado).isPresent()) {
-            throw new IllegalArgumentException("Ja existe uma tag cadastrada com este nome.");
+            throw new ConflitoException("Ja existe uma tag cadastrada com este nome.");
         }
         Tag tag = new Tag();
         tag.setNome(nomeValidado);
@@ -34,7 +36,7 @@ public class TagService {
     @Transactional(readOnly = true)
     public Tag buscarPorNome(String nome) {
         return tagRepository.findByNomeNormalizado(validarNome(nome))
-                .orElseThrow(() -> new IllegalArgumentException("Tag nao encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Tag nao encontrada."));
     }
 
     private String validarNome(String nome) {

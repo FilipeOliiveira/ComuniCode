@@ -1,5 +1,11 @@
 # Projeto adaptado ao Supabase
 
+> Atualizacao: a API agora possui autenticacao por sessao, DTOs e controllers.
+> Consulte [README_API.md](README_API.md) para o comportamento atual das rotas.
+> As secoes abaixo registram a entrega inicial de conexao; referencias a ausencia
+> de login, seguranca padrao e testes nao executados descrevem aquela entrega.
+> Credenciais agora sao obrigatoriamente lidas das variaveis DB_URL, DB_USERNAME e DB_PASSWORD.
+
 Mantidos Spring Boot 4.1.1, Java 25, Maven Wrapper, pacote com.example.demo,
 porta 8081, DemoApplication e OlaController. O objetivo desta entrega é testar
 conexão, escrita e leitura no schema entregue anteriormente. Não implementa login

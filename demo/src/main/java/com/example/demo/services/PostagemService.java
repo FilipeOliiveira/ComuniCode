@@ -1,5 +1,7 @@
 package com.example.demo.services;
 
+import com.example.demo.exception.*;
+
 import com.example.demo.model.*;
 import com.example.demo.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ public class PostagemService {
     public Postagem buscarPorId(UUID idPostagem) {
         validarId(idPostagem);
         return postagemRepository.findById(idPostagem)
-                .orElseThrow(() -> new IllegalArgumentException("Postagem nao encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Postagem nao encontrada."));
     }
 
     @Transactional(readOnly = true)
@@ -45,9 +47,9 @@ public class PostagemService {
         validarTitulo(titulo);
         Postagem postagem = buscarPorId(idPostagem);
         Usuario usuario = usuarioRepository.findById(idUsuarioLogado)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado."));
         if (!postagem.getCriador().getId().equals(usuario.getId()) && !(usuario instanceof Administrador)) {
-            throw new IllegalArgumentException("Acesso negado: sem permissao para editar esta postagem.");
+            throw new PermissaoNegadaException("Acesso negado: sem permissao para editar esta postagem.");
         }
         postagem.setTitulo(titulo.trim());
         postagem.setDescricao(descricao);
@@ -121,19 +123,24 @@ public class PostagemService {
             throw new IllegalArgumentException("A postagem deve conter pelo menos uma tag.");
         }
 
+        if (idsTags.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("As tags devem possuir IDs validos.");
+        }
+
         // 2. Buscar Entidades Relacionadas no Banco (Garante que elas existem)
         Usuario criador = usuarioRepository.findById(idCriador)
-                .orElseThrow(() -> new RuntimeException("Criador não encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Criador não encontrado."));
         
         Conteudo conteudo = conteudoRepository.findById(idConteudo)
-                .orElseThrow(() -> new RuntimeException("Conteúdo não encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conteúdo não encontrado."));
         
         List<Tag> tags = tagRepository.findAllById(idsTags);
         if (tags.size() != idsTags.size()) {
-            throw new RuntimeException("Uma ou mais Tags informadas não foram encontradas no sistema.");
+            throw new RecursoNaoEncontradoException("Uma ou mais Tags informadas não foram encontradas no sistema.");
         }
 
         // 3. Montar o objeto Postagem
+        postagem.setTitulo(postagem.getTitulo().trim());
         postagem.setCriador(criador);
         postagem.setConteudo(conteudo);
         postagem.setTags(tags);
@@ -166,17 +173,17 @@ public class PostagemService {
     public void excluirPostagem(UUID idPostagem, UUID idUsuarioLogado) {
         
         Postagem postagem = postagemRepository.findById(idPostagem)
-                .orElseThrow(() -> new RuntimeException("Postagem não encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Postagem não encontrada."));
 
         Usuario usuario = usuarioRepository.findById(idUsuarioLogado)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
 
         // Regra: Apenas o criador da postagem ou um Administrador podem excluí-la
         boolean isCriador = postagem.getCriador().getId().equals(usuario.getId());
         boolean isAdmin = usuario instanceof Administrador;
 
         if (!isCriador && !isAdmin) {
-            throw new RuntimeException("Acesso negado: Você não tem permissão para excluir esta postagem.");
+            throw new PermissaoNegadaException("Acesso negado: Você não tem permissão para excluir esta postagem.");
         }
 
         // Como a Postagem tem cascade=CascadeType.ALL nos Anexos, os anexos também serão deletados
