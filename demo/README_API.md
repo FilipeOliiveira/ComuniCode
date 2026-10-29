@@ -2,9 +2,11 @@
 
 ## Executar
 
-Use JDK 25 e configure `DB_URL`, `DB_USERNAME` e `DB_PASSWORD` no ambiente.
-O `.env.example` contem apenas placeholders. O VS Code pode carregar `.env` pelas
-configuracoes de depuracao; Maven nao carrega esse arquivo automaticamente.
+Use JDK 25 e configure `DB_URL`, `DB_USERNAME` e `DB_PASSWORD` em `demo/.env`
+ou no ambiente. O `.env.example` contem apenas placeholders. Ao executar na
+pasta `demo`, o perfil `supabase` importa `.env` como arquivo de propriedades:
+use linhas `CHAVE=valor`, sem aspas. Variaveis de ambiente tem prioridade.
+As configuracoes de depuracao do VS Code tambem carregam o mesmo arquivo.
 
 ```powershell
 .\mvnw.cmd spring-boot:run
@@ -48,6 +50,11 @@ encerra as sessoes. Cookies HttpOnly e SameSite=Lax; em HTTPS de producao use
 `SESSION_COOKIE_SECURE=true`. CORS entre origens ainda nao foi habilitado: configure
 uma origem explicita quando houver um frontend separado. As permissoes sao
 carregadas no login; alteracoes de perfil exigem nova sessao.
+
+O frontend React em `../frontend` usa um proxy de `/api` para a porta 8081 no
+desenvolvimento e no preview. Abra a interface pelo Vite e use sempre o mesmo
+host (localhost ou 127.0.0.1), pois os cookies pertencem ao host do navegador.
+Veja [como iniciar os dois processos](../frontend/README.md).
 
 ## Rotas
 
@@ -103,6 +110,13 @@ autorizacao de download e exclusao de objetos no Storage ainda nao existem.
 O servidor define o autor pela sessao e inicia a postagem como RASCUNHO. As consultas
 preservam a regra atual dos services, sem filtro de visibilidade por status; a politica
 de publicacao/rascunhos ainda precisa ser definida. As listas ainda nao sao paginadas.
+
+As respostas de postagens tambem incluem `autorPerfil`, `disciplinaId`,
+`disciplinaNome`, `conteudoTitulo` e `verificada`, para o frontend montar os
+cartoes sem buscar cada relacionamento separadamente. `verificada` se refere
+a postagem, nao ao professor. Nenhum email ou senha do autor e retornado.
+Os filtros combinados da interface atuam sobre a lista carregada; os filtros
+individuais existentes no endpoint permanecem com o mesmo contrato.
 
 Para evitar autoatribuicao de privilegios, professores sao cadastrados por admin
 e recebem peso inicial 1. O primeiro administrador deve ser provisionado por um

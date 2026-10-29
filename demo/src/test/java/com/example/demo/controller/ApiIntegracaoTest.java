@@ -189,11 +189,18 @@ class ApiIntegracaoTest {
         MockHttpSession session = login(aluno);
         String id = criarPostagem(session);
         mvc.perform(get("/api/postagens/" + id).session(session)).andExpect(status().isOk())
+                .andExpect(jsonPath("autorPerfil").value("ALUNO"))
+                .andExpect(jsonPath("disciplinaId").value(conteudo.getDisciplina().getId().toString()))
+                .andExpect(jsonPath("disciplinaNome").value(conteudo.getDisciplina().getNome()))
+                .andExpect(jsonPath("conteudoTitulo").value("Java"))
+                .andExpect(jsonPath("verificada").value(false))
                 .andExpect(jsonPath("tags[0].id").value(tag.getId().toString()))
                 .andExpect(jsonPath("anexos[0].nome").value("Material"))
                 .andExpect(jsonPath("anexos[0].postagem").doesNotExist());
         mvc.perform(get("/api/postagens").param("conteudoId", conteudo.getId().toString()).session(session))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(id));
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(id))
+                .andExpect(jsonPath("$[0].autorPerfil").value("ALUNO"))
+                .andExpect(jsonPath("$[0].disciplinaId").value(conteudo.getDisciplina().getId().toString()));
         mvc.perform(patch("/api/postagens/" + id).session(session).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON).content("{\"titulo\":\"Editada\",\"descricao\":\"Novo texto\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("titulo").value("Editada"));
@@ -236,6 +243,13 @@ class ApiIntegracaoTest {
                 .andExpect(status().isCreated()).andExpect(jsonPath("perfil").value("PROFESSOR"));
         Usuario professor = usuarios.findByEmailIgnoreCase(sufixo + "@example.invalid").orElseThrow();
         MockHttpSession professorSession = login(professor);
+        mvc.perform(post("/api/postagens").session(professorSession).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(novaPostagem()))
+                .andExpect(status().isCreated()).andExpect(jsonPath("autorPerfil").value("PROFESSOR"));
+        mvc.perform(get("/api/postagens").param("autorId", professor.getId().toString()).session(session))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].autorPerfil").value("PROFESSOR"))
+                .andExpect(jsonPath("$[0].disciplinaNome").value(conteudo.getDisciplina().getNome()))
+                .andExpect(jsonPath("$[0].email").doesNotExist());
         mvc.perform(post("/api/tags").session(professorSession).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nome\":\"" + sufixo + "\"}" )).andExpect(status().isCreated());
         mvc.perform(post("/api/conteudos").session(professorSession).with(csrf()).contentType(MediaType.APPLICATION_JSON)

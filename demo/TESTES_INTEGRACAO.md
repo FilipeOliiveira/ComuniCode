@@ -33,8 +33,8 @@ e clique em **Run Test** acima da classe ou de um metodo.
 
 A classe ativa os perfis `supabase` e `integracao-supabase` e utiliza a conexao
 configurada em `src/main/resources/application-supabase.properties`.
-O teste nao carrega `.env` automaticamente. Se precisar substituir a conexao
-no terminal, use as variaveis Spring `SPRING_DATASOURCE_URL`,
+Executando na pasta `demo`, o perfil `supabase` carrega `.env` automaticamente.
+Se precisar substituir a conexao no terminal, use as variaveis Spring `SPRING_DATASOURCE_URL`,
 `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`.
 Nao inclua senha na URL JDBC.
 

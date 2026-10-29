@@ -47,12 +47,21 @@ resolver erro de permissão. Em produção, planeje um papel específico para o 
 5. Execute. Para inicialização posterior sem carga, use **Demo - Supabase (sem carga)**.
 
 As duas configurações de launch.json apontam ao mesmo demo/.env, inclusive quando
-a subpasta demo é aberta diretamente. O arquivo .env é lido pelo depurador Java;
-Spring Boot/Maven não carregam .env automaticamente no terminal.
+a subpasta demo é aberta diretamente. O depurador Java lê o arquivo `.env`.
+No terminal, o perfil `supabase` também importa `.env` ao executar na pasta `demo`.
+Use linhas `CHAVE=valor`, sem aspas; variáveis de ambiente têm prioridade.
 
 ### Terminal PowerShell
 
 Na pasta `demo`, que contém pom.xml e mvnw.cmd:
+
+Com `.env` preenchido, inicie normalmente (sem inserir registros de teste):
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Para o teste manual de carga, também é possível informar as variáveis no terminal:
 
 ```powershell
 java -version
@@ -154,8 +163,9 @@ os recria. Os demais arquivos originais foram preservados.
 ## 6. Erros comuns
 
 - `release version 25 not supported`: Maven está usando JDK anterior ao 25.
-- `Could not resolve placeholder DB_URL`: preencha as variáveis no ambiente; no
-  VS Code, confira o demo/.env. No terminal, apenas criar .env não é suficiente.
+- `Could not resolve placeholder DB_URL` ou `jdbcUrl, ${DB_URL}`: confira as
+  variáveis no ambiente ou o arquivo `demo/.env`. No terminal, execute na pasta
+  `demo` para que o perfil `supabase` encontre esse arquivo.
 - `password authentication failed`: confira senha DO BANCO e usuário da conexão.
 - `UnknownHost`, `Network is unreachable` ou timeout: confira host, rede e opção
   Session pooler para IPv4. Nunca use a URL HTTPS da API como URL JDBC.
