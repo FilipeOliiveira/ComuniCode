@@ -1,0 +1,17 @@
+ demo/TESTES_INTEGRACAO.md                          |  82 [32m+++++++[m
+ demo/integracao-validation.log                     | Bin [31m0[m -> [32m717362[m bytes
+ demo/mvnw.cmd                                      |   5 [32m+[m[31m-[m
+ demo/pom.xml                                       |  15 [32m+[m[31m-[m
+ .../demo/controller/PostagemController.java        |   2 [32m+[m[31m-[m
+ .../example/demo/repository/UsuarioRepository.java |   3 [32m+[m[31m-[m
+ .../com/example/demo/services/PostagemService.java |  21 [32m+[m[31m-[m
+ .../com/example/demo/services/UsuarioService.java  |  93 [32m++++++[m[31m--[m
+ .../main/resources/application-supabase.properties |   6 [32m+[m[31m-[m
+ .../services/CadastroPermanenteSupabaseIT.java     |  71 [32m++++++[m
+ .../demo/services/DisciplinaServiceTest.java       | 153 [32m+++++++++++++[m
+ .../example/demo/services/PostagemServiceTest.java |  56 [32m+++++[m
+ .../example/demo/services/ServicesSupabaseIT.java  | 249 [32m+++++++++++++++++++++[m
+ .../example/demo/services/UsuarioServiceTest.java  | 138 [32m++++++++++++[m
+ .../application-integracao-supabase.properties     |   7 [32m+[m
+ demo/target-validation.log                         | Bin [31m0[m -> [32m199308[m bytes
+ 16 files changed, 875 insertions(+), 26 deletions(-)
