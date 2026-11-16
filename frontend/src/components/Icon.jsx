@@ -10,6 +10,8 @@ const paths = {
   calendar_today: 'M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4',
   open_in_new: 'M14 3h7v7 M21 3L10 14 M10 3H3v18h18v-7',
   arrow_forward: 'M4 12h16 M14 6l6 6-6 6',
+  upload_file: 'M14 3H6v18h12V7z M14 3v4h4 M12 17v-6 M9 13l3-3 3 3',
+  cloud_upload: 'M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19 10a4 4 0 0 1-1 8 M12 21v-8 M9 16l3-3 3 3',
 };
 
 export default function Icon({ name, className = '' }) {

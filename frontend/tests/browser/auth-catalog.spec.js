@@ -10,7 +10,8 @@ const posts = [
 ];
 
 async function mockApi(page, authenticated = false) {
-  const state = { authenticated, token: 'antes', posts, unavailable: false, catalogError: false, logoutError: false, registration: null };
+  const state = { authenticated, token: 'antes', posts, unavailable: false, catalogError: false, logoutError: false, registration: null,
+    tags: [{ id: 't1', nome: 'Java' }, { id: 't2', nome: 'Algoritmos' }], published: null, publishError: false };
   if (authenticated) await page.context().addCookies([{ name: 'JSESSIONID', value: 'logged', url: 'http://127.0.0.1:4173', httpOnly: true, sameSite: 'Lax' }]);
   await page.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
   await page.route(url => url.pathname.startsWith('/api/'), async route => {
@@ -46,6 +47,17 @@ async function mockApi(page, authenticated = false) {
     if (path === '/api/auth/me') return reply(200, user);
     if (state.catalogError) return reply(503, {});
     if (path === '/api/disciplinas') return reply(200, [{ id: 'd1', nome: 'Programação' }, { id: 'd2', nome: 'Cálculo' }]);
+    if (path === '/api/tags') return reply(200, state.tags);
+    if (path === '/api/conteudos') return reply(200, new URL(request.url()).searchParams.get('disciplinaId') === 'd1' ? [{ id: 'c2', titulo: 'Grafos', ordem: 2, disciplinaId: 'd1' }, { id: 'c1', titulo: 'Coleções', ordem: 1, disciplinaId: 'd1' }] : []);
+    if (path === '/api/postagens' && request.method() === 'POST') {
+      const body = request.postDataBuffer().toString('latin1');
+      expect(headers['content-type']).toMatch(/^multipart\/form-data; boundary=/);
+      state.published = body;
+      if (state.publishError) return reply(503, { status: 503, mensagem: 'Nao foi possivel salvar o arquivo. Tente novamente.' });
+      const created = { id: 'p3', titulo: 'Lista de grafos', descricao: 'Exercícios', autorId: user.id, autorNome: user.nome, autorPerfil: 'ALUNO', disciplinaId: 'd1', disciplinaNome: 'Programação', conteudoTitulo: 'Grafos', status: 'PUBLICADA', dataCriacao: '2026-11-16T12:00:00', verificada: false, tags: [{ nome: 'Java' }], anexos: [{ id: 'a3', nome: 'lista.pdf', tipo: 'PDF', url: '/api/anexos/123e4567-e89b-12d3-a456-426614174000/arquivo', tamanho: 9 }] };
+      state.posts = [created, ...state.posts];
+      return reply(201, created);
+    }
     if (path === '/api/postagens') return reply(200, state.posts);
     return reply(404, {});
   });
@@ -159,4 +171,61 @@ test('login e catálogo cabem na tela de celular', async ({ page }) => {
   await expect(page.getByRole('article')).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/catalog-mobile.png', fullPage: true });
+});
+
+test('publica material com arquivo real, valida antes de enviar e mostra no acervo', async ({ page }) => {
+  const state = await mockApi(page, true);
+  await page.goto('/');
+  await expect(page.getByRole('article')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Enviar material' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Enviar material' });
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Publicar material' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Informe o título do material.');
+  await dialog.getByLabel('Escolha ou arraste até 5 arquivos').setInputFiles({ name: 'programa.exe', mimeType: 'application/octet-stream', buffer: Buffer.from('MZ') });
+  await expect(dialog.getByRole('alert')).toContainText('Formato não permitido');
+
+  await dialog.getByLabel('Título do material').fill('Lista de grafos');
+  await dialog.getByLabel('Descrição').fill('Exercícios');
+  await expect(dialog.getByRole('combobox', { name: 'Conteúdo' })).toBeDisabled();
+  await dialog.getByRole('combobox', { name: 'Disciplina' }).selectOption('d2');
+  await expect(dialog.getByText('Esta disciplina ainda não tem conteúdos')).toBeVisible();
+  await dialog.getByRole('combobox', { name: 'Disciplina' }).selectOption('d1');
+  await expect(dialog.getByRole('combobox', { name: 'Conteúdo' }).locator('option')).toHaveText(['Selecione um conteúdo', 'Coleções', 'Grafos']);
+  await dialog.getByRole('combobox', { name: 'Conteúdo' }).selectOption('c2');
+  await dialog.getByLabel('Escolha ou arraste até 5 arquivos').setInputFiles({ name: 'lista.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7') });
+  await expect(dialog.getByRole('list', { name: 'Arquivos selecionados' })).toContainText('lista.pdf');
+  await dialog.getByRole('button', { name: 'Publicar material' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Escolha pelo menos uma tag.');
+  expect(state.published).toBe(null);
+
+  await dialog.getByRole('button', { name: 'Java', exact: true }).click();
+  state.publishError = true;
+  await dialog.getByRole('button', { name: 'Publicar material' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Não foi possível concluir a solicitação. Tente novamente.');
+  state.publishError = false;
+  await dialog.getByRole('button', { name: 'Publicar material' }).click();
+
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'foi publicado' })).toContainText('Lista de grafos');
+  await expect(page.getByRole('article')).toHaveCount(3);
+  await expect(page.getByRole('link', { name: 'Abrir lista.pdf (nova aba)', exact: true })).toHaveAttribute('href', '/api/anexos/123e4567-e89b-12d3-a456-426614174000/arquivo');
+  expect(state.published).toContain('name="dados"');
+  expect(state.published).toContain('"conteudoId":"c2"');
+  expect(state.published).toContain('"tagsIds":["t1"]');
+  expect(state.published).toContain('filename="lista.pdf"');
+  expect(state.published).toContain('%PDF-1.7');
+});
+
+test('sem tags cadastradas o formulário explica e não deixa publicar', async ({ page }) => {
+  const state = await mockApi(page, true);
+  state.tags = [];
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Enviar material' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Enviar material' });
+  await expect(dialog.getByText('Nenhuma tag cadastrada')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Publicar material' })).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
 });

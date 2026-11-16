@@ -81,7 +81,9 @@ Todo POST requer CSRF, inclusive o cadastro publico.
 | POST /api/tags | Professor ou admin | nome |
 | GET /api/postagens | Autenticado | Um filtro opcional: conteudoId, autorId ou tagId |
 | GET /api/postagens/{id} | Autenticado | UUID |
-| POST /api/postagens | Autenticado | Exemplo abaixo |
+| POST /api/postagens (JSON) | Autenticado | Exemplo abaixo; cria RASCUNHO com anexos externos |
+| POST /api/postagens (multipart) | Autenticado | Partes `dados` (JSON) e `arquivos` (1 a 5); publica com upload real |
+| GET /api/anexos/{id}/arquivo | Autenticado | Redireciona (302) para link temporario de 60 s no Storage |
 | PATCH /api/postagens/{id} | Autor ou admin | titulo obrigatorio, descricao opcional |
 | DELETE /api/postagens/{id} | Autor ou admin | Sem corpo |
 | GET /actuator/health | Publico | Saude, sem detalhes internos |
@@ -105,9 +107,14 @@ autenticacao, 403 para permissao/CSRF, 404 para recurso ausente e 409 para confl
 }
 ```
 
-Anexos sao opcionais e representam metadados de arquivos ja hospedados; upload,
-autorizacao de download e exclusao de objetos no Storage ainda nao existem.
-O servidor define o autor pela sessao e inicia a postagem como RASCUNHO. As consultas
+No JSON, anexos sao opcionais e representam metadados de arquivos ja hospedados em
+HTTP/HTTPS. O upload real usa a rota multipart, descrita em
+[docs/UPLOAD_ARQUIVOS.md](../docs/UPLOAD_ARQUIVOS.md): parte `dados` com
+`titulo`, `descricao`, `conteudoId` e `tagsIds`, mais ate 5 arquivos de 25 MB
+(pdf, png, jpg, jpeg, webp, mp4, doc, docx, ppt, pptx, odt, txt). Erros novos:
+413 para arquivo grande demais e 503 quando o Storage falha ou nao esta configurado.
+Pela rota JSON o servidor define o autor pela sessao e inicia a postagem como RASCUNHO;
+pela rota multipart ela ja nasce PUBLICADA. As consultas
 preservam a regra atual dos services, sem filtro de visibilidade por status; a politica
 de publicacao/rascunhos ainda precisa ser definida. As listas ainda nao sao paginadas.
 

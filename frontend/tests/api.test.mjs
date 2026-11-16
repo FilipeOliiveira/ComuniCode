@@ -51,3 +51,23 @@ test('não repete automaticamente operações recusadas por CSRF', async () => {
   await assert.rejects(api.login('a@b.com', 'senha'), error => error.status === 403);
   assert.equal(requests, 2);
 });
+
+test('publicação envia multipart com CSRF sem fixar Content-Type; conteúdos codificam o ID', async () => {
+  const calls = [];
+  const api = createApi(async (url, options) => {
+    calls.push({ url, ...options });
+    if (url.endsWith('/csrf')) return json({ headerName: 'X-CSRF-TOKEN', token: 'token' });
+    return url.startsWith('/api/postagens') ? json({ id: 'p1', titulo: 'Lista' }, 201) : json([]);
+  });
+  const form = new FormData();
+  form.append('arquivos', new File(['%PDF'], 'a.pdf'));
+  assert.equal((await api.publish(form)).id, 'p1');
+  const sent = calls.find(call => call.url === '/api/postagens');
+  assert.equal(sent.method, 'POST');
+  assert.equal(sent.body, form);
+  assert.equal(sent.headers['X-CSRF-TOKEN'], 'token');
+  assert.equal(sent.headers['Content-Type'], undefined);
+  await api.contents('a b&c');
+  await api.tags();
+  assert.deepEqual(calls.slice(-2).map(call => call.url), ['/api/conteudos?disciplinaId=a%20b%26c', '/api/tags']);
+});

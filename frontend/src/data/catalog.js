@@ -1,4 +1,8 @@
+// Arquivos hospedados pelo portal abrem pela rota autenticada do backend.
+const PORTAL_FILE = /^\/api\/anexos\/[0-9a-f-]{36}\/arquivo$/i;
+
 export function safeFileUrl(value) {
+  if (typeof value === 'string' && PORTAL_FILE.test(value)) return value;
   try {
     const url = new URL(value);
     return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null;
@@ -16,7 +20,7 @@ export function materialDateLabel(value) {
 
 function attachmentFromApi(file) {
   const url = safeFileUrl(file.url);
-  const path = url ? new URL(url).pathname : '';
+  const path = url ? new URL(url, 'http://portal.invalid').pathname : '';
   const extension = (file.nome?.match(/\.([a-z0-9]+)$/i)?.[1] || path.match(/\.([a-z0-9]+)$/i)?.[1] || '').toUpperCase();
   return {
     id: file.id, filename: file.nome, url, bytes: file.tamanho,
