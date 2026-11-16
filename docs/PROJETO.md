@@ -2,7 +2,7 @@
 
 > Portal acadêmico colaborativo para alunos e professores de Ciência da Computação (UFMA) compartilharem materiais de estudo.
 
-Este documento descreve o estado atual da branch `main`. O upload real de arquivos está na branch `feature/upload-arquivos`, ainda não integrada à `main`.
+Este documento descreve o estado atual da branch `main`.
 
 ---
 
@@ -17,7 +17,7 @@ O **ComuniCode** é um repositório de materiais acadêmicos. Alunos e professor
 | Disciplinas, conteúdos e tags | ✅ Backend (listagem consumida pelo frontend) |
 | Postagens com anexos e tags (criar, editar, excluir) | ✅ Backend |
 | Acervo com busca e filtros combinados | ✅ Frontend integrado à API |
-| Upload real de arquivos / publicação pela interface | ✅ Backend + frontend (Supabase Storage), na branch `feature/upload-arquivos`. Veja [UPLOAD_ARQUIVOS.md](UPLOAD_ARQUIVOS.md) |
+| Upload real de arquivos / publicação pela interface | ✅ Backend + frontend (Supabase Storage). Veja [UPLOAD_ARQUIVOS.md](UPLOAD_ARQUIVOS.md) |
 | Comentários, avaliações, denúncias, ranking, notificações | ⏳ Modelados no banco, ainda sem API |
 
 ## 2. Arquitetura
@@ -178,13 +178,13 @@ Repositório remoto: `github.com/FilipeOliiveira/ComuniCode`
 | 2026-10-29 | João | Atualiza branch com a versão local |
 | 2026-11-16 | Filipe | Remove logs gerados e adiciona `.gitignore` na raiz |
 | 2026-11-16 | Filipe | Adiciona documentação geral do projeto (`docs/PROJETO.md`) |
-| 2026-11-16 | Filipe | Upload real de arquivos (Supabase Storage) e publicação pela interface *(branch `feature/upload-arquivos`, ainda não integrada à `main`)* |
+| 2026-11-16 | Filipe | Upload real de arquivos (Supabase Storage) e publicação pela interface *(branch `feature/upload-arquivos`)* |
+| 2026-11-16 | Filipe | Merge do PR #1 (`feature/upload-arquivos`) na `main` |
 
-A `main` foi atualizada por fast-forward até a `minha-nova-versao`, que já inclui e expande a interface criada em `feature/interface-comunicode`. O upload de arquivos foi desenvolvido a partir da `main` na branch `feature/upload-arquivos`.
+A `main` foi atualizada por fast-forward até a `minha-nova-versao`, que já inclui e expande a interface criada em `feature/interface-comunicode`. O upload de arquivos foi desenvolvido na branch `feature/upload-arquivos` e integrado à `main` pelo PR #1.
 
 ## 5. Próximos passos
 
-- Integrar a branch `feature/upload-arquivos` à `main` e criar o bucket privado `materiais` no Supabase do grupo.
 - Editar e excluir materiais pela interface, e upload direto do navegador para arquivos maiores.
 - API e telas para comentários, avaliações, denúncias e moderação.
 - Política de visibilidade de rascunhos e paginação das listagens.

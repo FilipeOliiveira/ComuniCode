@@ -1,6 +1,6 @@
 # Upload real de arquivos e publicação pela interface
 
-> Branch `feature/upload-arquivos`. Este documento explica o que a funcionalidade faz, as decisões tomadas e como configurá-la e testá-la.
+> Integrado à `main` pelo PR #1 (branch `feature/upload-arquivos`). Este documento explica o que a funcionalidade faz, as decisões tomadas e como configurá-la e testá-la.
 
 ## 1. O que muda para o usuário
 
@@ -96,6 +96,8 @@ Clique em "Abrir arquivo"
 O modal antigo (`UploadMaterialModal`, `useUploads`, `data/uploads.js`, com IndexedDB) continua no projeto, mas fora de uso.
 
 ## 5. Configuração (uma vez por projeto Supabase)
+
+> **No projeto do grupo isto já está feito:** o bucket `materiais` existe e as chaves já estão no `demo/.env` compartilhado entre os integrantes. Os passos abaixo servem só para um projeto Supabase novo.
 
 1. **Criar o bucket:** no painel do Supabase, abra **Storage → New bucket**. Use o nome `materiais`, deixe **Public bucket desligado** e, se quiser, defina *File size limit* = 25 MB.
 2. **Pegar a URL e a chave:** em **Project Settings → API**, copie a **Project URL** (`https://<ref>.supabase.co`) e a chave secreta (**service_role** ou `sb_secret_...`).
