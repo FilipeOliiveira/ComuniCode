@@ -2,8 +2,11 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.*;
 import com.example.demo.services.PostagemApiService;
+import com.example.demo.services.PublicacaoService;
 import com.example.demo.security.UsuarioAutenticado;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +19,27 @@ public class PostagemController {
 
     public record EdicaoRequest(String titulo, String descricao) {}
     private final PostagemApiService service;
+    private final PublicacaoService publicacao;
 
-    public PostagemController(PostagemApiService service) { this.service = service; }
+    public PostagemController(PostagemApiService service, PublicacaoService publicacao) {
+        this.service = service;
+        this.publicacao = publicacao;
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public PostagemResponse criar(@RequestBody PostagemRequest request,
                                   @AuthenticationPrincipal UsuarioAutenticado principal) {
         return service.criar(request, principal.getId());
+    }
+
+    /** Publicacao pela interface: parte "dados" (JSON) e ate 5 arquivos na parte "arquivos". */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public PostagemResponse publicar(@RequestPart("dados") PublicacaoRequest dados,
+                                     @RequestPart(value = "arquivos", required = false) List<MultipartFile> arquivos,
+                                     @AuthenticationPrincipal UsuarioAutenticado principal) {
+        return publicacao.publicar(dados, arquivos, principal.getId());
     }
 
     @GetMapping

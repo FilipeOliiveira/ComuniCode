@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Icon from './Icon.jsx';
 import { filterCatalog, loadCatalog } from '../data/catalog.js';
 import MaterialSection from './MaterialSection.jsx';
+import PublishMaterialModal from './PublishMaterialModal.jsx';
 
 const formats = [{ id: 0, label: 'Todos' }, { id: 1, label: 'PDF' }, { id: 2, label: 'Word' }, { id: 3, label: 'Vídeos' }, { id: 4, label: 'Outros' }];
 const profiles = { ALUNO: 'Aluno', PROFESSOR: 'Professor', ADMIN: 'Administrador' };
@@ -18,6 +19,8 @@ export default function CatalogPage({ client, user, onSignedOut }) {
   const [discipline, setDiscipline] = useState('Todas');
   const [professor, setProfessor] = useState('todos');
   const [search, setSearch] = useState('');
+  const [publishing, setPublishing] = useState(false);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -42,6 +45,14 @@ export default function CatalogPage({ client, user, onSignedOut }) {
       if (failure.status === 401) onSignedOut('Sua sessão expirou. Entre novamente.');
       else { setActionError('Não foi possível sair. Tente novamente.'); setLeaving(false); }
     }
+  }
+
+  function published(post) {
+    setPublishing(false);
+    setNotice(`“${post.titulo}” foi publicado no acervo.`);
+    setView('all');
+    clearFilters();
+    setRefresh(value => value + 1);
   }
 
   const clearFilters = () => { setFormat(0); setDiscipline('Todas'); setProfessor('todos'); setSearch(''); };
@@ -82,12 +93,12 @@ export default function CatalogPage({ client, user, onSignedOut }) {
             <p className="text-on-surface-variant mt-space-md">Explore os materiais compartilhados pela comunidade.</p>
             <div className="flex flex-wrap gap-space-md mt-space-lg">
               <a href="#acervo" onClick={() => changeView('all')} className="card-action bg-primary-container text-on-primary-container px-space-lg">Explorar acervo</a>
-              <button disabled className="card-action bg-surface-container-highest" aria-describedby="upload-next">Enviar material</button>
+              <button onClick={() => { setNotice(''); setPublishing(true); }} disabled={loading || Boolean(error)} className="card-action bg-surface-container-highest"><Icon name="upload_file" /><span>Enviar material</span></button>
             </div>
-            <p id="upload-next" className="text-body-sm text-outline mt-space-sm">O envio de arquivos estará disponível em breve.</p>
           </div>
         </section>
         {actionError && <p role="alert" className="upload-notice">{actionError}</p>}
+        {notice && <p role="status" className="upload-notice">{notice}</p>}
         <section id="acervo" className="mb-space-xl" aria-label="Filtros do acervo">
           <div className="rounded-xl bg-surface-container-low p-space-lg flex flex-col gap-space-md">
             <div className="catalog-filters">
@@ -115,5 +126,7 @@ export default function CatalogPage({ client, user, onSignedOut }) {
         </>}
       </main>
     </div>
+    {publishing && <PublishMaterialModal client={client} disciplines={catalog.disciplines} onSignedOut={onSignedOut}
+      onClose={() => setPublishing(false)} onPublished={published} />}
   </div>;
 }

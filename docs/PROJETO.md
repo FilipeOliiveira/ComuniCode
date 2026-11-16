@@ -2,7 +2,7 @@
 
 > Portal acadêmico colaborativo para alunos e professores de Ciência da Computação (UFMA) compartilharem materiais de estudo.
 
-Este documento descreve o estado atual da branch `main`.
+Este documento descreve o estado atual da branch `main`. O upload real de arquivos está na branch `feature/upload-arquivos`, ainda não integrada à `main`.
 
 ---
 
@@ -17,7 +17,7 @@ O **ComuniCode** é um repositório de materiais acadêmicos. Alunos e professor
 | Disciplinas, conteúdos e tags | ✅ Backend (listagem consumida pelo frontend) |
 | Postagens com anexos e tags (criar, editar, excluir) | ✅ Backend |
 | Acervo com busca e filtros combinados | ✅ Frontend integrado à API |
-| Upload real de arquivos / publicação pela interface | ⏳ Próxima etapa |
+| Upload real de arquivos / publicação pela interface | ✅ Backend + frontend (Supabase Storage), na branch `feature/upload-arquivos`. Veja [UPLOAD_ARQUIVOS.md](UPLOAD_ARQUIVOS.md) |
 | Comentários, avaliações, denúncias, ranking, notificações | ⏳ Modelados no banco, ainda sem API |
 
 ## 2. Arquitetura
@@ -73,8 +73,9 @@ Navegador ──► Vite (5173) ──proxy /api──► Spring Boot (8081) ─
   - `StatusDenuncia` (PENDENTE, ANALISADA, REJEITADA)
   - `MotivoDenuncia` (SPAM, OFENSIVO, PLAGIO, OUTRO)
   - `TipoAnexo` (PDF, IMAGEM, VIDEO, DOCUMENTO)
-- **services**: `UsuarioService`, `DisciplinaService`, `ConteudoService`, `TagService`, `PostagemService` e `PostagemApiService`. Aplicam as regras de negócio e de permissão (por exemplo, só o autor ou um admin edita uma postagem).
-- **controller**: `AuthController`, `DisciplinaController`, `ConteudoController`, `TagController` e `PostagemController`. O `ApiExceptionHandler` padroniza os erros como `{ "status", "mensagem" }`.
+- **services**: `UsuarioService`, `DisciplinaService`, `ConteudoService`, `TagService`, `PostagemService`, `PostagemApiService`, `PublicacaoService` (upload + publicação), `AnexoService` (download) e `ValidadorArquivos`. Aplicam as regras de negócio e de permissão (por exemplo, só o autor ou um admin edita uma postagem).
+- **storage**: `ArmazenamentoArquivos` e `SupabaseStorage`, cliente da API REST do Supabase Storage (bucket privado).
+- **controller**: `AuthController`, `DisciplinaController`, `ConteudoController`, `TagController`, `PostagemController` e `AnexoController`. O `ApiExceptionHandler` padroniza os erros como `{ "status", "mensagem" }`.
 - **dto**: as entradas rejeitam campos desconhecidos, o que impede, por exemplo, enviar `perfil` ou `senhaHash`. As respostas nunca expõem senha nem e-mail do autor.
 
 **Principais rotas** (referência completa em [`demo/README_API.md`](../demo/README_API.md))
@@ -86,7 +87,9 @@ Navegador ──► Vite (5173) ──proxy /api──► Spring Boot (8081) ─
 | `POST /api/auth/cadastro/professor`, `POST /api/disciplinas` | Admin |
 | `POST /api/conteudos`, `POST /api/tags` | Professor ou admin |
 | `GET /api/disciplinas`, `/api/conteudos`, `/api/tags`, `/api/postagens` | Autenticado |
-| `POST /api/postagens` | Autenticado (a postagem começa como RASCUNHO) |
+| `POST /api/postagens` (JSON) | Autenticado (a postagem começa como RASCUNHO) |
+| `POST /api/postagens` (multipart) | Autenticado (upload de 1 a 5 arquivos; publica direto) |
+| `GET /api/anexos/{id}/arquivo` | Autenticado (redireciona para link temporário de 60 s) |
 | `PATCH` / `DELETE /api/postagens/{id}` | Autor ou admin |
 | `GET /actuator/health` | Público |
 
@@ -123,7 +126,7 @@ Fluxo da interface:
 3. **`CatalogPage`** carrega disciplinas e postagens da API e oferece busca e filtros por professor, disciplina e formato, além de "Meus materiais", logout e "Atualizar acervo". Também tem estados próprios para carregamento, erro e lista vazia.
 4. **`api/client.js`** centraliza as chamadas com `credentials: 'include'` e o cabeçalho CSRF.
 
-Senhas e tokens não são gravados no `localStorage`; a sessão depende apenas do cookie emitido pelo backend. O botão "Enviar Material" está desabilitado até a próxima etapa. Os componentes antigos de upload local (IndexedDB) e os PDFs de exemplo ainda estão no projeto, mas não são usados no acervo.
+Senhas e tokens não são gravados no `localStorage`; a sessão depende apenas do cookie emitido pelo backend. O botão "Enviar material" abre o `PublishMaterialModal`, que envia os arquivos ao backend e publica o material (detalhes em [UPLOAD_ARQUIVOS.md](UPLOAD_ARQUIVOS.md)). Os componentes antigos de upload local (IndexedDB) e os PDFs de exemplo ainda estão no projeto, mas não são usados no acervo.
 
 ## 3. Como executar
 
@@ -133,7 +136,7 @@ São necessários **dois terminais**.
 
 ```powershell
 cd demo
-copy .env.example .env    # preencha DB_URL, DB_USERNAME e DB_PASSWORD
+copy .env.example .env    # preencha DB_URL, DB_USERNAME, DB_PASSWORD e, para upload, SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -173,13 +176,16 @@ Repositório remoto: `github.com/FilipeOliiveira/ComuniCode`
 | 2026-10-28 | Ana Luiza | Implementa primeira versão da interface *(branch `feature/interface-comunicode`)* |
 | 2026-10-29 | João | Integra frontend com autenticação e acervo da API |
 | 2026-10-29 | João | Atualiza branch com a versão local |
-| 2026-11-16 | — | Remove logs gerados e adiciona `.gitignore` |
+| 2026-11-16 | Filipe | Remove logs gerados e adiciona `.gitignore` na raiz |
+| 2026-11-16 | Filipe | Adiciona documentação geral do projeto (`docs/PROJETO.md`) |
+| 2026-11-16 | Filipe | Upload real de arquivos (Supabase Storage) e publicação pela interface *(branch `feature/upload-arquivos`, ainda não integrada à `main`)* |
 
-A `main` foi atualizada por fast-forward até a `minha-nova-versao`, que já inclui e expande a interface criada em `feature/interface-comunicode`.
+A `main` foi atualizada por fast-forward até a `minha-nova-versao`, que já inclui e expande a interface criada em `feature/interface-comunicode`. O upload de arquivos foi desenvolvido a partir da `main` na branch `feature/upload-arquivos`.
 
 ## 5. Próximos passos
 
-- Upload real de arquivos (Supabase Storage) e publicação de materiais pela interface.
+- Integrar a branch `feature/upload-arquivos` à `main` e criar o bucket privado `materiais` no Supabase do grupo.
+- Editar e excluir materiais pela interface, e upload direto do navegador para arquivos maiores.
 - API e telas para comentários, avaliações, denúncias e moderação.
 - Política de visibilidade de rascunhos e paginação das listagens.
 - Ranking por relevância e regra para verificar materiais.

@@ -9,6 +9,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -41,6 +45,18 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     ResponseEntity<Erro> credenciais(BadCredentialsException ex) { return erro(401, "Credenciais invalidas."); }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<Erro> grande(MaxUploadSizeExceededException ex) {
+        return erro(413, "Arquivo grande demais: o limite e 25 MB por arquivo.");
+    }
+
+    @ExceptionHandler({MissingServletRequestPartException.class, MultipartException.class,
+            HttpMediaTypeNotSupportedException.class})
+    ResponseEntity<Erro> multipart(Exception ex) { return erro(400, "Envio de arquivos invalido."); }
+
+    @ExceptionHandler(ArmazenamentoIndisponivelException.class)
+    ResponseEntity<Erro> armazenamento(ArmazenamentoIndisponivelException ex) { return erro(503, ex.getMessage()); }
 
     @ExceptionHandler(ResponseStatusException.class)
     ResponseEntity<Erro> status(ResponseStatusException ex) { return erro(ex.getStatusCode().value(), ex.getReason()); }

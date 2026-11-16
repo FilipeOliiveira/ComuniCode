@@ -53,7 +53,11 @@ export function createApi(fetcher = (...args) => fetch(...args)) {
     }), 'application/json'),
     logout: () => post('/auth/logout'),
     disciplines: options => request('/disciplinas', options),
+    contents: (disciplineId, options) => request(`/conteudos?disciplinaId=${encodeURIComponent(disciplineId)}`, options),
+    tags: options => request('/tags', options),
     posts: options => request('/postagens', options),
+    // Multipart: o navegador define o Content-Type com o boundary.
+    publish: form => post('/postagens', form),
   };
 }
 

@@ -22,6 +22,15 @@ test('usa apenas URLs HTTP/HTTPS sem credenciais nos links de arquivos', () => {
   assert.equal(safeFileUrl('https://example.invalid/a.pdf'), 'https://example.invalid/a.pdf');
 });
 
+test('aceita a rota de download do portal e nenhum outro caminho relativo', () => {
+  const portal = '/api/anexos/123e4567-e89b-12d3-a456-426614174000/arquivo';
+  assert.equal(safeFileUrl(portal), portal);
+  for (const value of ['/api/auth/logout', '/api/anexos/../auth/me/arquivo', `${portal}?x=1`, `/${portal}`]) assert.equal(safeFileUrl(value), null);
+  const [material] = [materialFromApi({ id: 'p', titulo: 'T', anexos: [{ id: 'a', nome: 'Lista.pdf', tipo: 'PDF', url: portal, tamanho: 10 }] })];
+  assert.equal(material.attachments[0].url, portal);
+  assert.equal(material.attachments[0].format, 'PDF');
+});
+
 test('preserva a data local da API e converte datas com fuso para Fortaleza', () => {
   assert.equal(materialDateLabel('2026-10-29T00:30:00'), '29/10/2026');
   assert.equal(materialDateLabel('2026-10-29T00:30:00Z'), '28/10/2026');
