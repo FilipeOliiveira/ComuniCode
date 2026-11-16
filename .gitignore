@@ -1,0 +1,8 @@
+# Logs e relatórios gerados localmente
+*.log
+hs_err_pid*.log
+replay_pid*.log
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
